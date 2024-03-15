@@ -4,7 +4,6 @@ import { Container } from "@chakra-ui/react";
 
 import userAtom from "./atoms/userAtom";
 import Header from "./components/Header";
-import LogoutButton from "./components/LogoutButton";
 import CreatePost from "./components/CreatePost";
 import UserPage from "./pages/UserPage";
 import PostPage from "./pages/PostPage";
@@ -31,11 +30,20 @@ function App() {
           path="/profil"
           element={user ? <UpdateProfilePage /> : <Navigate to={"/auth"} />}
         />
-        <Route path="/:username" element={<UserPage />} />
+        <Route
+          path="/:username"
+          element={
+            user ? (
+              <>
+                <UserPage /> <CreatePost />
+              </>
+            ) : (
+              <UserPage />
+            )
+          }
+        />
         <Route path="/:username/post/:pid" element={<PostPage />} />
       </Routes>
-      {user && <LogoutButton />}
-      {user && <CreatePost />}
     </Container>
   );
 }

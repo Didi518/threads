@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useRecoilState } from "recoil";
 import { Flex, Spinner } from "@chakra-ui/react";
 
 import useShowToast from "../hooks/useShowToast";
 import useGetUserProfile from "../hooks/useGetUserProfile";
+import postsAtom from "../atoms/postsAtom";
 import UserHeader from "../components/UserHeader";
 import Post from "../components/Post";
 
 const UserPage = () => {
-  const [posts, setPosts] = useState([]);
   const [fetchingPosts, setFetchingPosts] = useState(true);
   const { username } = useParams();
+  const [posts, setPosts] = useRecoilState(postsAtom);
   const { user, loading } = useGetUserProfile();
   const showToast = useShowToast();
 
@@ -31,7 +33,8 @@ const UserPage = () => {
     };
 
     getPosts();
-  }, [username, showToast]);
+  }, [username, setPosts, showToast]);
+  console.log("Posts ici, gestion d'état Recoil ", posts);
 
   if (!user && loading) {
     return (
