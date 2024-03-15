@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import fr from "date-fns/locale/fr";
 import { Avatar, Box, Flex, Image, Text } from "@chakra-ui/react";
+import { DeleteIcon } from "@chakra-ui/icons";
+import { useRecoilValue } from "recoil";
+import fr from "date-fns/locale/fr";
 
 import Actions from "./Actions";
 import useShowToast from "../hooks/useShowToast";
+import userAtom from "../atoms/userAtom";
 
 const Post = ({ post, postedBy }) => {
   const [user, setUser] = useState(null);
+  const currentUser = useRecoilValue(userAtom);
   const navigate = useNavigate();
   const showToast = useShowToast();
   const locale = fr;
@@ -32,6 +36,26 @@ const Post = ({ post, postedBy }) => {
     getUser();
   }, [postedBy, showToast]);
 
+  const handleDeletePost = async (e) => {
+    try {
+      e.preventDefault();
+      if (!window.confirm("Êtes-vous certain de vouloir supprimer ce post?"))
+        return;
+
+      const res = await fetch(`/api/posts/${post._id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.error) {
+        showToast("Erreur", data.error, "error");
+        return;
+      }
+      showToast("Succès", "Post supprimé", "success");
+    } catch (error) {
+      showToast("Erreur", error.message, "error");
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -49,7 +73,7 @@ const Post = ({ post, postedBy }) => {
           />
           <Box w={"1px"} h={"full"} bg={"gray.light"} my={2}></Box>
           <Box position={"relative"} w={"full"}>
-            {post.replies.length === 0 && <Text>🥱</Text>}
+            {post.replies.length === 0 && <Text textAlign={"center"}>🥱</Text>}
             {post.replies[0] && (
               <Avatar
                 size={"xs"}
@@ -96,7 +120,7 @@ const Post = ({ post, postedBy }) => {
                   navigate(`${user.username}`);
                 }}
               >
-                {user.username}
+                {user?.username}
               </Text>
               <Image src="/verified.png" w={4} h={4} ml={1} />
             </Flex>
@@ -110,6 +134,9 @@ const Post = ({ post, postedBy }) => {
                 Il y a{" "}
                 {formatDistanceToNow(new Date(post.createdAt), { locale })}
               </Text>
+              {currentUser?._id === user._id && (
+                <DeleteIcon size={20} onClick={handleDeletePost} />
+              )}
             </Flex>
           </Flex>
           <Text fontSize={"sm"}>{post.text}</Text>
