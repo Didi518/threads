@@ -66,7 +66,6 @@ const UserHeader = ({ user }) => {
         user?.followers.push(currentUser?._id);
       }
       setFollowing(!following);
-      console.log(data);
     } catch (error) {
       showToast("Erreur", error, "error");
     } finally {
