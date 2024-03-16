@@ -1,4 +1,6 @@
-// import { GiConversation } from "react-icons/gi";
+import { useEffect, useState } from "react";
+import { GiConversation } from "react-icons/gi";
+import { useRecoilState, useRecoilValue } from "recoil";
 import {
   Box,
   Button,
@@ -11,10 +13,102 @@ import {
 } from "@chakra-ui/react";
 import { SearchIcon } from "@chakra-ui/icons";
 
+import useShowToast from "../hooks/useShowToast";
+import {
+  conversationsAtom,
+  selectedConversationAtom,
+} from "../atoms/messagesAtom";
+import userAtom from "../atoms/userAtom";
 import Conversation from "../components/Conversation";
 import MessageContainer from "../components/MessageContainer";
 
 const ChatPage = () => {
+  const [loadingConversations, setLoadingConversations] = useState(true);
+  const [searchText, setSearchText] = useState("");
+  const [searchingUser, setSearchingUser] = useState(false);
+  const currentUser = useRecoilValue(userAtom);
+  const [conversations, setConversations] = useRecoilState(conversationsAtom);
+  const [selectedConversation, setSelectedConversation] = useRecoilState(
+    selectedConversationAtom
+  );
+  const showToast = useShowToast();
+
+  useEffect(() => {
+    const getConversations = async () => {
+      try {
+        const res = await fetch("/api/messages/conversations");
+        const data = await res.json();
+        if (data.error) {
+          showToast("Erreur", data.error, "error");
+          return;
+        }
+        setConversations(data);
+      } catch (error) {
+        showToast("Erreur", error.message, "error");
+      } finally {
+        setLoadingConversations(false);
+      }
+    };
+
+    getConversations();
+  }, [setConversations, showToast]);
+
+  const handleConversationSearch = async (e) => {
+    e.preventDefault();
+    setSearchingUser(true);
+
+    try {
+      const res = await fetch(`/api/users/profile/${searchText}`);
+      const searchedUser = await res.json();
+      if (searchedUser.error) {
+        showToast("Erreur", searchedUser.error, "error");
+        return;
+      }
+
+      const messagingYourself = searchedUser._id === currentUser._id;
+      if (messagingYourself) {
+        showToast(
+          "Erreur",
+          "Vous ne pouvez pas chatter avec vous-même",
+          "error"
+        );
+        return;
+      }
+
+      const conversationAlreadyExists = conversations.find(
+        (conversation) => conversation.participants[0]._id === searchedUser._id
+      );
+
+      if (conversationAlreadyExists) {
+        setSelectedConversation({
+          _id: conversationAlreadyExists._id,
+          userId: searchedUser._id,
+          username: searchedUser.username,
+          userProfilePic: searchedUser.profilePic,
+        });
+        return;
+      }
+
+      const mockConversation = {
+        mock: true,
+        lastMessage: { text: "", sender: "" },
+        _id: Date.now(),
+        participants: [
+          {
+            _id: searchedUser._id,
+            username: searchedUser.username,
+            profilePic: searchedUser.profilePic,
+          },
+        ],
+      };
+      setConversations((prevConvs) => [...prevConvs, mockConversation]);
+    } catch (error) {
+      showToast("Erreur", error.message, "error");
+    } finally {
+      setSearchingUser(false);
+    }
+  };
+
   return (
     <Box
       position={"absolute"}
@@ -41,15 +135,22 @@ const ChatPage = () => {
           >
             Vos Conversations
           </Text>
-          <form>
+          <form onSubmit={handleConversationSearch}>
             <Flex alignItems={"center"} gap={2}>
-              <Input placeholder="Chercher un ami" />
-              <Button size={"sm"}>
+              <Input
+                placeholder="Chercher un ami"
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+              <Button
+                size={"sm"}
+                onClick={handleConversationSearch}
+                isLoading={searchingUser}
+              >
                 <SearchIcon />
               </Button>
             </Flex>
           </form>
-          {false &&
+          {loadingConversations &&
             [0, 1, 2, 3, 4].map((_, i) => (
               <Flex
                 key={i}
@@ -67,25 +168,31 @@ const ChatPage = () => {
                 </Flex>
               </Flex>
             ))}
-          <Conversation />
-          <Conversation />
-          <Conversation />
+          {!loadingConversations &&
+            conversations.map((conversation) => (
+              <Conversation
+                key={conversation._id}
+                conversation={conversation}
+              />
+            ))}
         </Flex>
-        {/* <Flex
-          flex={70}
-          borderRadius={"md"}
-          p={2}
-          flexDir={"column"}
-          alignItems={"center"}
-          justifyContent={"center"}
-          height={"400px"}
-        >
-          <GiConversation size={100} />
-          <Text fontSize={20}>
-            Choisissez une conversation pour commencer à chatter
-          </Text>
-        </Flex> */}
-        <MessageContainer />
+        {!selectedConversation._id && (
+          <Flex
+            flex={70}
+            borderRadius={"md"}
+            p={2}
+            flexDir={"column"}
+            alignItems={"center"}
+            justifyContent={"center"}
+            height={"400px"}
+          >
+            <GiConversation size={100} />
+            <Text fontSize={20}>
+              Choisissez une conversation pour commencer à chatter
+            </Text>
+          </Flex>
+        )}
+        {selectedConversation._id && <MessageContainer />}
       </Flex>
     </Box>
   );

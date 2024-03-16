@@ -1,3 +1,5 @@
+import { useRecoilState, useRecoilValue } from "recoil";
+import { BsCheck2All } from "react-icons/bs";
 import {
   Avatar,
   AvatarBadge,
@@ -6,10 +8,22 @@ import {
   Stack,
   Text,
   WrapItem,
+  useColorMode,
   useColorModeValue,
 } from "@chakra-ui/react";
 
-const Conversation = () => {
+import userAtom from "../atoms/userAtom";
+import { selectedConversationAtom } from "../atoms/messagesAtom";
+
+const Conversation = ({ conversation }) => {
+  const colorMode = useColorMode();
+  const currentUser = useRecoilValue(userAtom);
+  const [selectedConversation, setSelectedConversation] = useRecoilState(
+    selectedConversationAtom
+  );
+  const user = conversation.participants[0];
+  const lastMessage = conversation.lastMessage;
+
   return (
     <Flex
       gap={4}
@@ -20,22 +34,42 @@ const Conversation = () => {
         bg: useColorModeValue("gray.600", "gray.dark"),
         color: "white",
       }}
+      onClick={() =>
+        setSelectedConversation({
+          _id: conversation._id,
+          userId: user._id,
+          userProfilePic: user.profilePic,
+          username: user.username,
+          mock: conversation.mock,
+        })
+      }
+      bg={
+        selectedConversation?._id === conversation._id
+          ? colorMode === "light"
+            ? "gray.400"
+            : "gray.dark"
+          : ""
+      }
       borderRadius={"md"}
     >
       <WrapItem>
-        <Avatar
-          size={{ base: "xs", sm: "sm", md: "md" }}
-          src="https://bit.ly/broken-link"
-        >
+        <Avatar size={{ base: "xs", sm: "sm", md: "md" }} src={user.profilePic}>
           <AvatarBadge boxSize={"1em"} bg={"green.500"} />
         </Avatar>
       </WrapItem>
       <Stack direction={"column"} fontSize={"sm"}>
         <Text fontWeight={700} display={"flex"} alignItems={"center"}>
-          johndoe <Image src="/verified.png" w={4} h={4} ml={1} />
+          {user.username} <Image src="/verified.png" w={4} h={4} ml={1} />
         </Text>
         <Text fontSize={"xs"} display={"flex"} alignItems={"center"} gap={1}>
-          Coucou les messages ...
+          {currentUser._id === lastMessage.sender ? (
+            <BsCheck2All size={16} />
+          ) : (
+            ""
+          )}
+          {lastMessage.text.length > 18
+            ? lastMessage.text.substring(0, 18) + "..."
+            : lastMessage.text}
         </Text>
       </Stack>
     </Flex>
