@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useRecoilValue } from "recoil";
+import { useEffect, useRef, useState } from "react";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 import {
   Avatar,
   Divider,
@@ -12,17 +12,51 @@ import {
 } from "@chakra-ui/react";
 
 import useShowToast from "../hooks/useShowToast";
+import { useSocket } from "../context/SocketContext";
+import {
+  conversationsAtom,
+  selectedConversationAtom,
+} from "../atoms/messagesAtom";
+import userAtom from "../atoms/userAtom";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
-import { selectedConversationAtom } from "../atoms/messagesAtom";
-import userAtom from "../atoms/userAtom";
 
 const MessageContainer = () => {
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [messages, setMessages] = useState([]);
+  const messageEndRef = useRef(null);
   const currentUser = useRecoilValue(userAtom);
   const selectedConversation = useRecoilValue(selectedConversationAtom);
+  const setConversations = useSetRecoilState(conversationsAtom);
+  const { socket } = useSocket();
   const showToast = useShowToast();
+
+  useEffect(() => {
+    socket.on("newMessage", (message) => {
+      if (selectedConversation._id === message.conversationId) {
+        setMessages((prev) => [...prev, message]);
+      }
+
+      setConversations((prev) => {
+        const updatedConversations = prev.map((conversation) => {
+          if (conversation._id === message.conversationId) {
+            return {
+              ...conversation,
+              lastMessage: { text: message.text, sender: message.sender },
+            };
+          }
+          return conversation;
+        });
+        return updatedConversations;
+      });
+    });
+
+    return () => socket.off("newMessage");
+  }, [selectedConversation, setConversations, socket]);
+
+  useEffect(() => {
+    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   useEffect(() => {
     const getMessages = async () => {
@@ -94,11 +128,20 @@ const MessageContainer = () => {
           ))}
         {!loadingMessages &&
           messages.map((message) => (
-            <Message
+            <Flex
               key={message._id}
-              message={message}
-              ownMessage={currentUser._id === message.sender}
-            />
+              direction={"column"}
+              ref={
+                messages.length - 1 === messages.indexOf(message)
+                  ? messageEndRef
+                  : null
+              }
+            >
+              <Message
+                message={message}
+                ownMessage={currentUser._id === message.sender}
+              />
+            </Flex>
           ))}
       </Flex>
       <MessageInput setMessages={setMessages} />

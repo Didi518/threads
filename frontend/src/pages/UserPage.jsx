@@ -34,7 +34,6 @@ const UserPage = () => {
 
     getPosts();
   }, [username, setPosts, showToast]);
-  console.log("Posts ici, gestion d'état Recoil ", posts);
 
   if (!user && loading) {
     return (

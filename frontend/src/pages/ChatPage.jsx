@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { SearchIcon } from "@chakra-ui/icons";
 
+import { useSocket } from "../context/SocketContext";
 import useShowToast from "../hooks/useShowToast";
 import {
   conversationsAtom,
@@ -32,6 +33,7 @@ const ChatPage = () => {
     selectedConversationAtom
   );
   const showToast = useShowToast();
+  const { socket, onlineUsers } = useSocket();
 
   useEffect(() => {
     const getConversations = async () => {
@@ -172,6 +174,9 @@ const ChatPage = () => {
             conversations.map((conversation) => (
               <Conversation
                 key={conversation._id}
+                isOnline={onlineUsers.includes(
+                  conversation.participants[0]._id
+                )}
                 conversation={conversation}
               />
             ))}
