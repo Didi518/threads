@@ -36,6 +36,28 @@ const ChatPage = () => {
   const { socket, onlineUsers } = useSocket();
 
   useEffect(() => {
+    socket?.on("messagesSeen", ({ conversationId }) => {
+      setConversations((prev) => {
+        const updatedConversations = prev.map((conversation) => {
+          if (conversation._id === conversationId) {
+            return {
+              ...conversation,
+              lastMessage: {
+                ...conversation.lastMessage,
+                seen: true,
+              },
+            };
+          }
+
+          return conversation;
+        });
+
+        return updatedConversations;
+      });
+    });
+  }, [setConversations, socket]);
+
+  useEffect(() => {
     const getConversations = async () => {
       try {
         const res = await fetch("/api/messages/conversations");
@@ -171,7 +193,7 @@ const ChatPage = () => {
               </Flex>
             ))}
           {!loadingConversations &&
-            conversations.map((conversation) => (
+            conversations?.map((conversation) => (
               <Conversation
                 key={conversation._id}
                 isOnline={onlineUsers.includes(

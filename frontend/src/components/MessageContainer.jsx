@@ -42,7 +42,10 @@ const MessageContainer = () => {
           if (conversation._id === message.conversationId) {
             return {
               ...conversation,
-              lastMessage: { text: message.text, sender: message.sender },
+              lastMessage: {
+                text: message.text,
+                sender: message.sender,
+              },
             };
           }
           return conversation;
@@ -52,7 +55,36 @@ const MessageContainer = () => {
     });
 
     return () => socket.off("newMessage");
-  }, [selectedConversation, setConversations, socket]);
+  }, [socket, selectedConversation, setConversations]);
+
+  useEffect(() => {
+    const lastMessageIsFromOtherUser =
+      messages.length &&
+      messages[messages.length - 1].sender !== currentUser._id;
+    if (lastMessageIsFromOtherUser) {
+      socket.emit("markMessagesAsSeen", {
+        conversationId: selectedConversation._id,
+        userId: selectedConversation.userId,
+      });
+    }
+
+    socket.on("messagesSeen", ({ conversationId }) => {
+      if (selectedConversation._id === conversationId) {
+        setMessages((prev) => {
+          const updatedMessages = prev.map((message) => {
+            if (!message.seen) {
+              return {
+                ...message,
+                seen: true,
+              };
+            }
+            return message;
+          });
+          return updatedMessages;
+        });
+      }
+    });
+  }, [socket, currentUser._id, messages, selectedConversation]);
 
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,48 +94,49 @@ const MessageContainer = () => {
     const getMessages = async () => {
       setLoadingMessages(true);
       setMessages([]);
-
       try {
         if (selectedConversation.mock) return;
-
         const res = await fetch(`/api/messages/${selectedConversation.userId}`);
         const data = await res.json();
         if (data.error) {
-          showToast("Erreur", data.error, "error");
+          showToast("Error", data.error, "error");
           return;
         }
         setMessages(data);
       } catch (error) {
-        showToast("Erreur", error.message, "error");
+        showToast("Error", error.message, "error");
       } finally {
         setLoadingMessages(false);
       }
     };
 
     getMessages();
-  }, [selectedConversation, showToast]);
+  }, [showToast, selectedConversation.userId, selectedConversation.mock]);
 
   return (
     <Flex
-      flex={70}
+      flex="70"
       bg={useColorModeValue("gray.200", "gray.dark")}
       borderRadius={"md"}
       p={2}
       flexDirection={"column"}
     >
+      {/* Message header */}
       <Flex w={"full"} h={12} alignItems={"center"} gap={2}>
         <Avatar src={selectedConversation.userProfilePic} size={"sm"} />
         <Text display={"flex"} alignItems={"center"}>
-          {selectedConversation.username}
+          {selectedConversation.username}{" "}
           <Image src="/verified.png" w={4} h={4} ml={1} />
         </Text>
       </Flex>
+
       <Divider />
+
       <Flex
-        flexDirection={"column"}
+        flexDir={"column"}
         gap={4}
-        px={2}
         my={4}
+        p={2}
         height={"400px"}
         overflowY={"auto"}
       >
@@ -118,14 +151,15 @@ const MessageContainer = () => {
               alignSelf={i % 2 === 0 ? "flex-start" : "flex-end"}
             >
               {i % 2 === 0 && <SkeletonCircle size={7} />}
-              <Flex flexDirection={"column"} gap={2}>
-                <Skeleton h={"8px"} w={"250px"} />
-                <Skeleton h={"8px"} w={"250px"} />
-                <Skeleton h={"8px"} w={"250px"} />
+              <Flex flexDir={"column"} gap={2}>
+                <Skeleton h="8px" w="250px" />
+                <Skeleton h="8px" w="250px" />
+                <Skeleton h="8px" w="250px" />
               </Flex>
               {i % 2 !== 0 && <SkeletonCircle size={7} />}
             </Flex>
           ))}
+
         {!loadingMessages &&
           messages.map((message) => (
             <Flex
@@ -144,6 +178,7 @@ const MessageContainer = () => {
             </Flex>
           ))}
       </Flex>
+
       <MessageInput setMessages={setMessages} />
     </Flex>
   );
