@@ -2,6 +2,7 @@ import express from "express";
 
 import {
   followUnfollowUser,
+  freezeAccount,
   getSuggestedUsers,
   getUserProfile,
   loginUser,
@@ -22,5 +23,6 @@ router.post("/logout", logoutUser);
 router.post("/follow/:id", protectRoute, followUnfollowUser);
 
 router.put("/update/:id", protectRoute, updateUser);
+router.put("/freeze", protectRoute, freezeAccount);
 
 export default router;

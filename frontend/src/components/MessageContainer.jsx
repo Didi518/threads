@@ -20,6 +20,7 @@ import {
 import userAtom from "../atoms/userAtom";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
+import messageSound from "../assets/sounds/message.mp3";
 
 const MessageContainer = () => {
   const [loadingMessages, setLoadingMessages] = useState(true);
@@ -35,6 +36,11 @@ const MessageContainer = () => {
     socket.on("newMessage", (message) => {
       if (selectedConversation._id === message.conversationId) {
         setMessages((prev) => [...prev, message]);
+      }
+
+      if (!document.hasFocus()) {
+        const sound = new Audio(messageSound);
+        sound.play();
       }
 
       setConversations((prev) => {

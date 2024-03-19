@@ -18,6 +18,7 @@ const UserPage = () => {
 
   useEffect(() => {
     const getPosts = async () => {
+      if (!user) return;
       setFetchingPosts(true);
 
       try {
@@ -33,7 +34,7 @@ const UserPage = () => {
     };
 
     getPosts();
-  }, [username, setPosts, showToast]);
+  }, [username, setPosts, showToast, user]);
 
   if (!user && loading) {
     return (

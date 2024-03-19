@@ -2,6 +2,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { AiFillHome } from "react-icons/ai";
 import { BsFillChatQuoteFill } from "react-icons/bs";
 import { FiLogOut } from "react-icons/fi";
+import { MdOutlineSettings } from "react-icons/md";
 import { RxAvatar } from "react-icons/rx";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { Button, Flex, Image, Link, useColorMode } from "@chakra-ui/react";
@@ -46,6 +47,9 @@ const Header = () => {
           </Link>
           <Link as={RouterLink} to={`/chat`}>
             <BsFillChatQuoteFill size={20} />
+          </Link>
+          <Link as={RouterLink} to={`/parametres`}>
+            <MdOutlineSettings size={20} />
           </Link>
           <Button size={"xs"} onClick={logout}>
             <FiLogOut size={20} />
