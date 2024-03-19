@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { BsInstagram } from "react-icons/bs";
 import { CgMoreO } from "react-icons/cg";
@@ -19,14 +18,12 @@ import {
 } from "@chakra-ui/react";
 
 import useShowToast from "../hooks/useShowToast";
+import useFollowUnfollow from "../hooks/useFollowUnfollow";
 import userAtom from "../atoms/userAtom";
 
 const UserHeader = ({ user }) => {
   const currentUser = useRecoilValue(userAtom);
-  const [following, setFollowing] = useState(
-    user?.followers.includes(currentUser?._id)
-  );
-  const [updating, setUpdating] = useState(false);
+  const { handleFollowUnfollow, following, updating } = useFollowUnfollow(user);
   const showToast = useShowToast();
 
   const copyURL = () => {
@@ -34,43 +31,6 @@ const UserHeader = ({ user }) => {
     navigator.clipboard.writeText(currentURL).then(() => {
       showToast("Succès", "Lien copié", "success");
     });
-  };
-
-  const handleFollowUnfollow = async () => {
-    if (!currentUser) {
-      showToast("Erreur", "Merci de vous connecter pour vous abonner", "error");
-      return;
-    }
-    if (updating) return;
-
-    setUpdating(true);
-
-    try {
-      const res = await fetch(`/api/users/follow/${user._id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await res.json();
-      if (data.error) {
-        showToast("Erreur", data.error, "error");
-        return;
-      }
-
-      if (following) {
-        showToast("Succès", `Vous ignorez ${user?.name}`, "success");
-        user?.followers.pop();
-      } else {
-        showToast("Succès", `Vous suivez ${user?.name}`, "success");
-        user?.followers.push(currentUser?._id);
-      }
-      setFollowing(!following);
-    } catch (error) {
-      showToast("Erreur", error, "error");
-    } finally {
-      setUpdating(false);
-    }
   };
 
   return (
