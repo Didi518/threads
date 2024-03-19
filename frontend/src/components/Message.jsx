@@ -34,16 +34,19 @@ const Message = ({ ownMessage, message }) => {
                 src={message.img}
                 hidden
                 onLoad={() => setImgLoaded(true)}
-                alt="Message image"
+                alt="Image du message"
                 borderRadius={4}
               />
               <Skeleton w={"200px"} h={"200px"} />
             </Flex>
           )}
-
-          {message.img && !imgLoaded && (
+          {message.img && imgLoaded && (
             <Flex mt={5} w={"200px"}>
-              <Image src={message.img} alt="Message image" borderRadius={4} />
+              <Image
+                src={message.img}
+                alt="Image du message"
+                borderRadius={4}
+              />
               <Box
                 alignSelf={"flex-end"}
                 ml={1}
@@ -54,14 +57,12 @@ const Message = ({ ownMessage, message }) => {
               </Box>
             </Flex>
           )}
-
           <Avatar src={user.profilePic} w="7" h={7} />
         </Flex>
       ) : (
         <Flex gap={2}>
           <Avatar src={selectedConversation.userProfilePic} w="7" h={7} />
-
-          {message.text && !imgLoaded && (
+          {message.text && (
             <Text
               maxW={"350px"}
               bg={"gray.400"}
@@ -78,16 +79,19 @@ const Message = ({ ownMessage, message }) => {
                 src={message.img}
                 hidden
                 onLoad={() => setImgLoaded(true)}
-                alt="Message image"
+                alt="Image du message"
                 borderRadius={4}
               />
               <Skeleton w={"200px"} h={"200px"} />
             </Flex>
           )}
-
-          {message.img && !imgLoaded && (
+          {message.img && imgLoaded && (
             <Flex mt={5} w={"200px"}>
-              <Image src={message.img} alt="Message image" borderRadius={4} />
+              <Image
+                src={message.img}
+                alt="Image du message"
+                borderRadius={4}
+              />
             </Flex>
           )}
         </Flex>
