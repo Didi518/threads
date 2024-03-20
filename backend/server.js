@@ -6,6 +6,8 @@ import path from "path";
 
 import { app, server } from "./socket/socket.js";
 import connectDB from "./db/connectDB.js";
+import job from "./cron/cron.js";
+
 import userRoutes from "./routes/userRoutes.js";
 import postRoutes from "./routes/postRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
@@ -13,6 +15,7 @@ import messageRoutes from "./routes/messageRoutes.js";
 dotenv.config();
 
 connectDB();
+job.start();
 
 const PORT = process.env.PORT || 5000;
 const __dirname = path.resolve();
